@@ -1,0 +1,7 @@
+/wish-server
+*.test
+*.out
+.DS_Store
+/authlaunch
+/brogue-server
+/.claude/

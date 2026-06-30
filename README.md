@@ -109,14 +109,16 @@ player-visible lives under `/brogue/` (the data volume):
 Brogue writes saves **and** scores to its current working directory (no
 `HACKDIR`-style env, no chdir of its own), so `brogue-run.sh` `cd`s into the
 per-user dir before launching. Per-user cwd ⇒ per-user saves and scores. (A
-global shared scoreboard is deferred.)
+global shared scoreboard is deferred.) Because the server runs with
+`--single-save` (see [The fork](#the-fork)), each per-user dir holds at most one
+save (`Game.broguesave`) at a time; recordings still accumulate.
 
 ## The fork
 
 We run a small fork —
 [`geechorama/BrogueCE`](https://github.com/geechorama/BrogueCE), branch
-`g10s`, tag **`v1.15.1-g10s3`** (pinned in the Dockerfile) — carrying two patches
-to `src/platform/curses-platform.c`:
+`g10s`, tag **`v1.15.1-g10s4`** (pinned in the Dockerfile) — carrying these
+changes:
 
 - **SIGHUP hangup-save.** Stock Brogue CE has no SIGHUP handling, so an SSH
   disconnect would kill the game unsaved. The patch (~40 lines) mirrors Brogue's
@@ -133,6 +135,15 @@ to `src/platform/curses-platform.c`:
   computes the remainder in `long` and skips the correction on the first call.
   It affects only the ncurses (TERMINAL) build, and is filed upstream as
   [tmewett/BrogueCE#854](https://github.com/tmewett/BrogueCE/pull/854).
+- **`--single-save` mode** (`MainMenu.c`, `Recordings.c`, `main.c`). A new
+  command-line flag that limits the player to one save slot, NetHack-style: the
+  save uses a single fixed filename and is overwritten rather than accumulating
+  numbered files; the title screen's "Load Game" file browser becomes a
+  "Continue" that loads that one save directly; and starting a new game while a
+  save exists asks for confirmation, then abandons the old run. Loading still
+  consumes the save (Brogue's existing delete-on-load), so there is no going back
+  to a previous state. `brogue-run.sh` passes the flag; without it the binary
+  behaves exactly like stock Brogue.
 
 The fork tracks upstream via its `upstream` remote; to take a new Brogue release,
 rebase the `g10s` branch onto the new tag, re-tag `vX.Y.Z-g10sN`, and bump the
@@ -155,9 +166,10 @@ Dockerfile.
   `/brogue` data directories, then execs `authlaunch -- brogue-run.sh`.
 - **`brogue-run.sh`** — run by `authlaunch` after auth. Makes the per-user dir,
   `cd`s into it, drops root → `games` (uid 5) via `setpriv`, and execs
-  `brogue -t --data-dir /opt/brogue`.
+  `brogue -t --single-save --data-dir /opt/brogue` (see [The fork](#the-fork) for
+  `--single-save`).
 - **`Dockerfile`** — three stages: Go builder (`wish-server` + `authlaunch`); C
-  builder (clones the Brogue fork at `v1.15.1-g10s3`, `make TERMINAL=YES
+  builder (clones the Brogue fork at `v1.15.1-g10s4`, `make TERMINAL=YES
   GRAPHICS=NO`); slim runtime (ncurses, `util-linux` for `setpriv`, tzdata).
 - **`.github/workflows/ci.yml`** — builds `linux/amd64`, pushes `:latest` and
   `<branch>-<short-sha>` to `ghcr.io/geechorama/brogue-server`.

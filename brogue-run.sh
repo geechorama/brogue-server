@@ -19,5 +19,9 @@ cd "$USERDIR"
 # must not run as root. setpriv exec-replaces, so Brogue keeps this process's PID
 # (and the wish server's process group), so the SIGHUP-on-disconnect hangup-save
 # reaches it directly.
+#
+# --single-save (g10s fork): each player gets one save slot, consumed on load,
+# so there's no going back to a previous save (NetHack-style). The title screen's
+# "Load Game" browser becomes "Continue".
 exec setpriv --reuid=5 --regid=60 --clear-groups -- \
-    /opt/brogue/brogue -t --data-dir /opt/brogue
+    /opt/brogue/brogue -t --single-save --data-dir /opt/brogue

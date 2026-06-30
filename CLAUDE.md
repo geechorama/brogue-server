@@ -23,7 +23,7 @@ podman build -t brogue-server .   # full image (prefer podman over docker)
 ```
 
 The image build clones the Brogue fork `geechorama/BrogueCE` at tag
-`v1.15.1-g10s3` and builds it `make TERMINAL=YES GRAPHICS=NO` (pure ncurses).
+`v1.15.1-g10s4` and builds it `make TERMINAL=YES GRAPHICS=NO` (pure ncurses).
 
 ## Architecture (summary)
 
@@ -33,18 +33,27 @@ The image build clones the Brogue fork `geechorama/BrogueCE` at tag
   enforces nick ownership, execs the target with `$AUTH_NICK`. Game-agnostic and
   env-driven (no dgamelaunch/`DGLAUTH` handoff; the nick is passed via `AUTH_NICK`).
 - `brogue-launch.sh` — `WISH_COMMAND`; lays out `/brogue`, execs `authlaunch -- brogue-run.sh`.
-- `brogue-run.sh` — per-user cwd + `setpriv` drop to `games` (uid 5) + exec brogue.
+- `brogue-run.sh` — per-user cwd + `setpriv` drop to `games` (uid 5) + exec brogue
+  with `--single-save` (one save slot, consumed on load).
 
 ## The Brogue fork
 
 The patches live in `geechorama/BrogueCE` (branch `g10s`, tag
-`v1.15.1-g10s3`), not here. Two patches to `src/platform/curses-platform.c`: a
-SIGHUP handler that saves the game and exits (mirroring Brogue's SDL
-window-close path), and a fix for an upstream short-overflow in `_delayUpTo`
-that hung the terminal title screen for up to ~32s on startup (filed upstream as
-tmewett/BrogueCE#854). **To take a new Brogue release:** in that repo, rebase
-`g10s` onto the new upstream tag, re-tag `vX.Y.Z-g10sN`, push, then bump the tag
-in this repo's `Dockerfile` in an explicit commit.
+`v1.15.1-g10s4`), not here. Three changes:
+- **SIGHUP hangup-save** (`src/platform/curses-platform.c`): a handler that saves
+  the game and exits (mirroring Brogue's SDL window-close path).
+- **`_delayUpTo` startup-hang fix** (`curses-platform.c`): a fix for an upstream
+  short-overflow that hung the terminal title screen for up to ~32s on startup
+  (filed upstream as tmewett/BrogueCE#854).
+- **`--single-save` mode** (`MainMenu.c`, `Recordings.c`, `main.c`): one save slot,
+  consumed on load (NetHack-style) — saves never accumulate, "Load Game" becomes
+  "Continue", and starting a new game over a save confirms then abandons it.
+  `brogue-run.sh` passes the flag; without it the game is stock. See the
+  README's "The fork" section.
+
+**To take a new Brogue release:** in that repo, rebase `g10s` onto the new
+upstream tag, re-tag `vX.Y.Z-g10sN`, push, then bump the tag in this repo's
+`Dockerfile` in an explicit commit.
 
 ## Notes
 

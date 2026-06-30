@@ -26,12 +26,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Our fork of Brogue CE, pinned to an immutable tag. The fork adds a SIGHUP
 # hangup-save so an SSH disconnect cleanly saves the in-progress game, fixes
 # an upstream short-overflow in _delayUpTo that hung the terminal title screen
-# for up to ~32s on startup, and adds a --single-save mode (one save slot,
-# consumed on load — NetHack-style) which brogue-run.sh enables. See
-# geechorama/BrogueCE @ v1.15.1-g10s4.
+# for up to ~32s on startup, adds a --single-save mode (one save slot,
+# consumed on load — NetHack-style) which brogue-run.sh enables, and adds a
+# shared cross-player global high-score leaderboard fed by $BROGUE_GLOBAL_SCORES
+# / $AUTH_NICK (both exported by brogue-run.sh). See
+# geechorama/BrogueCE @ v1.15.1-g10s5.
 # TERMINAL=YES GRAPHICS=NO yields a pure-ncurses binary (no SDL) at bin/brogue.
 WORKDIR /tmp
-RUN git clone --depth 1 --branch v1.15.1-g10s4 \
+RUN git clone --depth 1 --branch v1.15.1-g10s5 \
       https://github.com/geechorama/BrogueCE.git brogue
 WORKDIR /tmp/brogue
 RUN make TERMINAL=YES GRAPHICS=NO

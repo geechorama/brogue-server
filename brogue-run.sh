@@ -14,6 +14,19 @@ mkdir -p "$USERDIR"
 chown games:games "$USERDIR"
 cd "$USERDIR"
 
+# Shared cross-player global high-score leaderboard. Every player's game runs as
+# the same games uid in this one pod, so they can all append to one file on the
+# /brogue volume. Our forked Brogue appends each finished game here (tagged with
+# the nick) and can render a global board from it; it's a no-op in the game if
+# BROGUE_GLOBAL_SCORES is unset. Create the dir games-owned and group-writable so
+# whichever session lands first can create the file and the rest can append.
+SHAREDDIR="/brogue/shared"
+mkdir -p "$SHAREDDIR"
+chown games:games "$SHAREDDIR"
+chmod 775 "$SHAREDDIR"
+export BROGUE_GLOBAL_SCORES="${SHAREDDIR}/GlobalHighScores.txt"
+export AUTH_NICK
+
 # Drop from root to the unprivileged games user (uid 5, gid 60) before running
 # the game. authlaunch needed root to read/write the root-owned keys.tsv; Brogue
 # must not run as root. setpriv exec-replaces, so Brogue keeps this process's PID

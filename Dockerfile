@@ -30,10 +30,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # consumed on load — NetHack-style) which brogue-run.sh enables, and adds a
 # shared cross-player global high-score leaderboard fed by $BROGUE_GLOBAL_SCORES
 # / $AUTH_NICK (both exported by brogue-run.sh). See
-# geechorama/BrogueCE @ v1.15.1-g10s5.
+# geechorama/BrogueCE @ v1.15.1-g10s6.
 # TERMINAL=YES GRAPHICS=NO yields a pure-ncurses binary (no SDL) at bin/brogue.
 WORKDIR /tmp
-RUN git clone --depth 1 --branch v1.15.1-g10s5 \
+RUN git clone --depth 1 --branch v1.15.1-g10s6 \
       https://github.com/geechorama/BrogueCE.git brogue
 WORKDIR /tmp/brogue
 RUN make TERMINAL=YES GRAPHICS=NO
